@@ -1,0 +1,157 @@
+erDiagram
+    users {
+        UUID id PK
+        VARCHAR email UK
+        VARCHAR password_hash
+        VARCHAR name
+        ENUM role
+        TIMESTAMP created_at
+    }
+
+    user_addresses {
+        UUID id PK
+        UUID user_id FK
+        VARCHAR label
+        VARCHAR street
+        VARCHAR city
+        VARCHAR state
+        VARCHAR zip_code
+        VARCHAR country
+        BOOLEAN is_default
+    }
+
+    categories {
+        UUID id PK
+        VARCHAR name
+        UUID parent_id FK "self-ref nullable"
+        VARCHAR slug UK
+    }
+
+    products {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        DECIMAL price
+        UUID category_id FK
+        VARCHAR brand
+        VARCHAR sku UK
+        BOOLEAN is_active
+        TIMESTAMP created_at
+    }
+
+    product_images {
+        UUID id PK
+        UUID product_id FK
+        VARCHAR url "S3 origin URL"
+        VARCHAR cdn_url "CloudFront CDN URL"
+        VARCHAR alt_text
+        INTEGER sort_order
+        BOOLEAN is_primary
+    }
+
+    product_variants {
+        UUID id PK
+        UUID product_id FK
+        VARCHAR variant_name "e.g. Size, Color"
+        VARCHAR variant_value "e.g. XL, Red"
+        DECIMAL price_override "nullable"
+        VARCHAR sku UK
+    }
+
+    reviews {
+        UUID id PK
+        UUID product_id FK
+        UUID user_id FK
+        TINYINT rating "1-5"
+        VARCHAR title
+        TEXT body
+        TIMESTAMP created_at
+    }
+
+    warehouses {
+        UUID id PK
+        VARCHAR name
+        VARCHAR city
+        VARCHAR country
+    }
+
+    inventory {
+        UUID id PK
+        UUID product_id FK
+        UUID variant_id FK "nullable"
+        UUID warehouse_id FK
+        INTEGER stock_quantity
+        INTEGER reserved_quantity
+        TIMESTAMP last_updated
+    }
+
+    carts {
+        UUID id PK
+        UUID user_id FK, UK
+        TIMESTAMP created_at
+    }
+
+    cart_items {
+        UUID id PK
+        UUID cart_id FK
+        UUID product_id FK
+        UUID variant_id FK "nullable"
+        INTEGER quantity
+    }
+
+    orders {
+        UUID id PK
+        UUID user_id FK
+        UUID shipping_address_id FK
+        DECIMAL total_amount
+        ENUM status "pending|paid|shipped|delivered|cancelled"
+        TIMESTAMP created_at
+    }
+
+    order_items {
+        UUID id PK
+        UUID order_id FK
+        UUID product_id FK
+        UUID variant_id "nullable snapshot"
+        INTEGER quantity
+        DECIMAL price_at_time
+        VARCHAR product_name_snapshot
+    }
+
+    payments {
+        UUID id PK
+        UUID order_id FK, UK
+        DECIMAL amount
+        VARCHAR method
+        ENUM status "pending|completed|failed|refunded"
+        VARCHAR transaction_ref
+        VARCHAR idempotency_key UK
+        TIMESTAMP created_at
+    }
+
+    %% ========== RELATIONSHIPS ==========
+
+    users ||--o{ user_addresses : "has many"
+    users ||--|| carts : "has one"
+    users ||--o{ orders : "places"
+    users ||--o{ reviews : "writes"
+
+    categories ||--o{ categories : "parent of (self-ref)"
+    categories ||--o{ products : "contains"
+
+    products ||--o{ product_images : "has many (CDN-backed)"
+    products ||--o{ product_variants : "has many"
+    products ||--o{ reviews : "receives"
+    products ||--o{ inventory : "tracked in"
+    products ||--o{ cart_items : "added to"
+    products ||--o{ order_items : "ordered as"
+
+    product_variants ||--o{ inventory : "stocked as"
+
+    warehouses ||--o{ inventory : "stores"
+
+    carts ||--o{ cart_items : "contains"
+
+    orders ||--o{ order_items : "contains"
+    orders ||--|| payments : "paid via"
+    user_addresses ||--o{ orders : "shipped to"

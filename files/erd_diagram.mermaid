@@ -1,0 +1,73 @@
+erDiagram
+    users {
+        UUID id PK
+        VARCHAR email UK
+        VARCHAR password_hash
+        VARCHAR name
+        ENUM role
+        TIMESTAMP created_at
+    }
+
+    products {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        DECIMAL price
+        VARCHAR category
+        VARCHAR image_url
+        TIMESTAMP created_at
+    }
+
+    inventory {
+        UUID id PK
+        UUID product_id FK, UK
+        INTEGER stock_quantity
+        TIMESTAMP last_updated
+    }
+
+    carts {
+        UUID id PK
+        UUID user_id FK, UK
+        TIMESTAMP created_at
+    }
+
+    cart_items {
+        UUID id PK
+        UUID cart_id FK
+        UUID product_id FK
+        INTEGER quantity
+    }
+
+    orders {
+        UUID id PK
+        UUID user_id FK
+        DECIMAL total_amount
+        VARCHAR status
+        TIMESTAMP created_at
+    }
+
+    order_items {
+        UUID id PK
+        UUID order_id FK
+        UUID product_id FK
+        INTEGER quantity
+        DECIMAL price_at_time
+    }
+
+    payments {
+        UUID id PK
+        UUID order_id FK, UK
+        DECIMAL amount
+        VARCHAR method
+        VARCHAR status
+        TIMESTAMP created_at
+    }
+
+    users ||--|| carts : "has one"
+    users ||--o{ orders : "places"
+    carts ||--o{ cart_items : "contains"
+    products ||--o{ cart_items : "added to"
+    products ||--|| inventory : "tracked by"
+    products ||--o{ order_items : "ordered as"
+    orders ||--o{ order_items : "contains"
+    orders ||--|| payments : "paid via"

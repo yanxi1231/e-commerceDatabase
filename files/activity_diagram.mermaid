@@ -1,0 +1,60 @@
+stateDiagram-v2
+    [*] --> Register_Login
+    
+    Register_Login --> Browse_Products : Authenticated
+    Register_Login --> Register_Login : Auth Failed
+    
+    Browse_Products --> Search_Products : Search by keyword
+    Browse_Products --> View_Product : Select product
+    Search_Products --> View_Product : Select from results
+    Search_Products --> Browse_Products : Back to browsing
+
+    View_Product --> Add_to_Cart : Add item (select qty)
+    View_Product --> Browse_Products : Continue shopping
+    
+    Add_to_Cart --> Browse_Products : Continue shopping
+    Add_to_Cart --> View_Cart : Go to cart
+
+    View_Cart --> Update_Cart : Change qty / Remove item
+    Update_Cart --> View_Cart : Cart updated
+    View_Cart --> Browse_Products : Continue shopping
+    View_Cart --> Checkout : Proceed to checkout
+
+    state Checkout {
+        [*] --> Verify_Stock
+        Verify_Stock --> Create_Order : Stock available
+        Verify_Stock --> Out_of_Stock : Insufficient stock
+        Out_of_Stock --> [*]
+        Create_Order --> Decrement_Inventory
+        Decrement_Inventory --> Clear_Cart
+        Clear_Cart --> [*]
+    }
+    
+    Checkout --> Make_Payment : Order created
+    Checkout --> View_Cart : Stock issue, return to cart
+
+    state Make_Payment {
+        [*] --> Enter_Payment_Details
+        Enter_Payment_Details --> Process_Payment
+        Process_Payment --> Payment_Success : Completed
+        Process_Payment --> Payment_Failed : Error
+        Payment_Failed --> Enter_Payment_Details : Retry
+        Payment_Success --> [*]
+    }
+
+    Make_Payment --> View_Order_Status : Payment confirmed
+    
+    View_Order_Status --> Browse_Products : Continue shopping
+    View_Order_Status --> [*] : Done
+
+    state Admin_Operations {
+        [*] --> Manage_Products
+        Manage_Products --> Create_Product
+        Manage_Products --> Update_Product
+        Manage_Products --> Delete_Product
+        Manage_Products --> Update_Inventory
+        Create_Product --> [*]
+        Update_Product --> [*]
+        Delete_Product --> [*]
+        Update_Inventory --> [*]
+    }
