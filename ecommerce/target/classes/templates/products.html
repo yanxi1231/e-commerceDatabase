@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Products')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Products</h1>
+    </div>
+
+    <!-- Search Bar -->
+    <form th:action="@{/products}" method="get" class="search-bar">
+        <input type="text" name="search" class="form-control" placeholder="Search products..."
+               th:value="${searchQuery}">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a th:if="${searchQuery != null || selectedCategory != null}"
+           th:href="@{/products}" class="btn btn-outline">Clear</a>
+    </form>
+
+    <!-- Category Pills -->
+    <div class="category-pills">
+        <a th:href="@{/products}" class="category-pill"
+           th:classappend="${selectedCategory == null && searchQuery == null} ? 'active'">All</a>
+        <th:block th:each="cat : ${categories}">
+            <a th:href="@{/products(category=${cat.id})}" class="category-pill"
+               th:classappend="${selectedCategory == cat.id} ? 'active'"
+               th:text="${cat.name}">Category</a>
+        </th:block>
+    </div>
+
+    <!-- Messages -->
+    <div th:if="${successMsg}" class="alert alert-success" th:text="${successMsg}"></div>
+
+    <!-- Product Grid -->
+    <div th:if="${#lists.isEmpty(products)}" class="empty-state">
+        <h2>No products found</h2>
+        <p>Try a different search term or browse all products.</p>
+        <a th:href="@{/products}" class="btn btn-primary">Browse All</a>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(products)}" class="product-grid">
+        <a th:each="product : ${products}" th:href="@{/products/{id}(id=${product.id})}"
+           class="card product-card" style="text-decoration:none; color:inherit;">
+            <img th:src="${product.primaryImageUrl}" th:alt="${product.name}">
+            <div class="card-body">
+                <h3 th:text="${product.name}">Product Name</h3>
+                <div class="brand" th:text="${product.brand} ?: 'No brand'">Brand</div>
+                <div class="price" th:text="'$' + ${#numbers.formatDecimal(product.basePrice, 1, 2)}">$0.00</div>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

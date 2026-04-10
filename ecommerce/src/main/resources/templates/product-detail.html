@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${product.name})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+    <a th:href="@{/products}" style="display:inline-block; margin-bottom:1rem; font-size:0.9rem;">&larr; Back to Products</a>
+
+    <div class="product-detail">
+        <!-- Image -->
+        <div>
+            <img th:src="${product.primaryImageUrl}" th:alt="${product.name}">
+        </div>
+
+        <!-- Info -->
+        <div class="product-info">
+            <h1 th:text="${product.name}">Product Name</h1>
+            <div class="brand" th:text="${product.brand} ?: ''">Brand</div>
+            <div class="price" th:text="'$' + ${#numbers.formatDecimal(product.basePrice, 1, 2)}">$0.00</div>
+
+            <!-- Stock badge (for products without variants) -->
+            <div th:if="${stock != null}">
+                <span th:if="${stock > 10}" class="stock-badge stock-in" th:text="'In Stock (' + ${stock} + ')'">In Stock</span>
+                <span th:if="${stock > 0 && stock <= 10}" class="stock-badge stock-low" th:text="'Only ' + ${stock} + ' left'">Low Stock</span>
+                <span th:if="${stock == 0}" class="stock-badge stock-out">Out of Stock</span>
+            </div>
+
+            <p class="description" th:text="${product.description}">Description</p>
+
+            <!-- Add to Cart Form -->
+            <form th:action="@{/cart/add}" method="post" sec:authorize="isAuthenticated()">
+                <input type="hidden" name="productId" th:value="${product.id}">
+
+                <!-- Variant Selection (if product has variants) -->
+                <div th:if="${!#lists.isEmpty(variants)}" class="form-group">
+                    <label for="variantId">Select Option</label>
+                    <select name="variantId" id="variantId" class="form-control">
+                        <option th:each="v : ${variants}"
+                                th:value="${v.id}"
+                                th:text="${v.displayLabel} + (${v.priceOverride != null} ? ' — $' + ${#numbers.formatDecimal(v.priceOverride, 1, 2)} : '')">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" name="quantity" id="quantity" class="form-control"
+                           value="1" min="1" max="99" style="width:100px;">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg"
+                        th:disabled="${stock != null && stock == 0}">
+                    Add to Cart
+                </button>
+            </form>
+
+            <!-- Prompt to log in -->
+            <div sec:authorize="isAnonymous()" style="margin-top:1rem;">
+                <a th:href="@{/login}" class="btn btn-primary btn-lg">Log in to add to cart</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="reviews" th:if="${!#lists.isEmpty(product.reviews)}">
+        <h2>Customer Reviews</h2>
+        <div class="card">
+            <div th:each="review : ${product.reviews}" class="review-card">
+                <div class="review-header">
+                    <span class="reviewer" th:text="${review.user.name}">Reviewer</span>
+                    <span class="date" th:text="${#temporals.format(review.createdAt, 'MMM d, yyyy')}">Date</span>
+                </div>
+                <div class="stars">
+                    <span th:each="i : ${#numbers.sequence(1, review.rating)}">&#9733;</span>
+                    <span th:each="i : ${#numbers.sequence(review.rating + 1, 5)}" style="color:var(--gray-300);">&#9733;</span>
+                </div>
+                <div th:if="${review.title}" class="review-title" th:text="${review.title}">Title</div>
+                <div th:if="${review.body}" class="review-body" th:text="${review.body}">Body</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="reviews" th:if="${#lists.isEmpty(product.reviews)}">
+        <h2>Customer Reviews</h2>
+        <p style="color:var(--gray-400);">No reviews yet.</p>
+    </div>
+</div>
+</body>
+</html>

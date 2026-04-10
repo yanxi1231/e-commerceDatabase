@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' — LiFNaY Store'">LiFNaY Store</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- Navbar Fragment -->
+<nav th:fragment="navbar" class="navbar">
+    <a href="/products" class="navbar-brand">LiFNaY Store</a>
+    <div class="navbar-links">
+        <a th:href="@{/products}">Products</a>
+
+        <!-- Authenticated links -->
+        <span sec:authorize="isAuthenticated()">
+            <a th:href="@{/cart}">
+                Cart
+                <span th:if="${cartCount != null && cartCount > 0}" class="cart-badge"
+                      th:text="${cartCount}">0</span>
+            </a>
+            <a th:href="@{/orders}">Orders</a>
+            <a th:href="@{/logout}" style="color: var(--gray-400);">
+                Logout (<span th:text="${currentUserName}">User</span>)
+            </a>
+        </span>
+
+        <!-- Anonymous links -->
+        <span sec:authorize="isAnonymous()">
+            <a th:href="@{/login}">Login</a>
+            <a th:href="@{/register}">Register</a>
+        </span>
+    </div>
+</nav>
+
+</body>
+</html>

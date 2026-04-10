@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Order Details')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container">
+
+    <!-- Confirmation banner for new orders -->
+    <div th:if="${isNewOrder}" class="confirmation-box" style="margin-bottom:2rem;">
+        <div class="checkmark">&#10003;</div>
+        <h1>Order Placed Successfully!</h1>
+        <p>Thank you for your purchase. Your order has been confirmed.</p>
+    </div>
+
+    <!-- Order Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <div>
+            <h1 style="font-size:1.25rem;">
+                Order <span style="font-family:monospace; color:var(--gray-500);"
+                            th:text="${#strings.abbreviate(order.id, 12)}">ID</span>
+            </h1>
+            <div style="font-size:0.9rem; color:var(--gray-500);"
+                 th:text="'Placed on ' + ${#temporals.format(order.createdAt, 'MMMM d, yyyy ''at'' h:mm a')}">Date</div>
+        </div>
+        <div>
+            <span class="status-badge"
+                  th:classappend="'status-' + ${order.status.name()}"
+                  th:text="${order.statusDisplay}">Status</span>
+        </div>
+    </div>
+
+    <div class="checkout-grid">
+        <!-- Left: Items -->
+        <div>
+            <div class="card">
+                <div class="card-body">
+                    <h3 style="margin-bottom:0.75rem;">Order Items</h3>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Qty</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${order.items}">
+                                <td>
+                                    <span th:text="${item.productNameSnapshot}">Product</span>
+                                </td>
+                                <td th:text="'$' + ${#numbers.formatDecimal(item.priceAtTime, 1, 2)}">$0.00</td>
+                                <td th:text="${item.quantity}">1</td>
+                                <td style="font-weight:600;"
+                                    th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 2)}">$0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Shipping Address -->
+            <div class="card" style="margin-top:1rem;">
+                <div class="card-body">
+                    <h3 style="margin-bottom:0.5rem;">Shipping Address</h3>
+                    <div style="font-size:0.9rem; color:var(--gray-600);">
+                        <div th:text="${order.shippingAddress.recipientName}">Name</div>
+                        <div th:text="${order.shippingAddress.street}">Street</div>
+                        <div>
+                            <span th:text="${order.shippingAddress.city}">City</span>,
+                            <span th:text="${order.shippingAddress.state}">State</span>
+                            <span th:text="${order.shippingAddress.zipCode}">Zip</span>
+                        </div>
+                        <div th:text="${order.shippingAddress.country}">Country</div>
+                        <div th:if="${order.shippingAddress.phone}" th:text="'Phone: ' + ${order.shippingAddress.phone}">Phone</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Summary -->
+        <div class="order-summary-box">
+            <h3>Payment Summary</h3>
+
+            <div class="summary-line">
+                <span>Subtotal</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}">$0.00</span>
+            </div>
+            <div class="summary-line">
+                <span>Shipping</span>
+                <span style="color:var(--success);">Free</span>
+            </div>
+            <div class="summary-line total">
+                <span>Total</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(order.totalAmount, 1, 2)}">$0.00</span>
+            </div>
+
+            <div th:if="${order.payment}" style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--gray-200);">
+                <div class="summary-line">
+                    <span>Payment Method</span>
+                    <span th:text="${order.payment.methodDisplay}">Credit Card</span>
+                </div>
+                <div class="summary-line">
+                    <span>Payment Status</span>
+                    <span class="status-badge"
+                          th:classappend="${order.payment.status.name() == 'completed'} ? 'status-delivered' : 'status-pending'"
+                          th:text="${order.payment.status.name()}">Status</span>
+                </div>
+                <div th:if="${order.payment.transactionRef}" class="summary-line">
+                    <span>Transaction Ref</span>
+                    <span style="font-family:monospace; font-size:0.8rem;"
+                          th:text="${order.payment.transactionRef}">Ref</span>
+                </div>
+            </div>
+
+            <div style="margin-top:1.5rem; display:flex; flex-direction:column; gap:0.5rem;">
+                <a th:href="@{/orders}" class="btn btn-outline btn-block">View All Orders</a>
+                <a th:href="@{/products}" class="btn btn-primary btn-block">Continue Shopping</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

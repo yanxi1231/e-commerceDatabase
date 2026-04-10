@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Log In</h1>
+
+        <div th:if="${errorMsg}" class="alert alert-error" th:text="${errorMsg}"></div>
+        <div th:if="${successMsg}" class="alert alert-success" th:text="${successMsg}"></div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label for="username">Email</label>
+                <input type="email" id="username" name="username" class="form-control"
+                       placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control"
+                       placeholder="Your password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Log In</button>
+        </form>
+
+        <p class="auth-footer">
+            Don't have an account? <a th:href="@{/register}">Register here</a>
+        </p>
+    </div>
+
+    <p style="text-align:center; margin-top:1rem; font-size:0.8rem; color:var(--gray-400);">
+        Demo: alice@example.com / password123
+    </p>
+</div>
+</body>
+</html>
