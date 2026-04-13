@@ -10,7 +10,10 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     List<Product> findByIsActiveTrue();
 
-    List<Product> findByCategoryIdAndIsActiveTrue(String categoryId);
+    // Match products directly in this category OR in any of its subcategories
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
+           "(p.category.id = :categoryId OR p.category.parent.id = :categoryId)")
+    List<Product> findByCategoryOrSubcategoryAndIsActiveTrue(@Param("categoryId") String categoryId);
 
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
            "(LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

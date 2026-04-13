@@ -34,9 +34,9 @@ public class ProductService {
         return productRepository.findByIsActiveTrue();
     }
 
-    /** Get products by category */
+    /** Get products by category (includes products in subcategories) */
     public List<Product> getProductsByCategory(String categoryId) {
-        return productRepository.findByCategoryIdAndIsActiveTrue(categoryId);
+        return productRepository.findByCategoryOrSubcategoryAndIsActiveTrue(categoryId);
     }
 
     /** Search products by keyword */
