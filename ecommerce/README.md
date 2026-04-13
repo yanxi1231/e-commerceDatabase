@@ -43,11 +43,10 @@ The application starts at **http://localhost:8080**
 
 ### 4. Demo Accounts
 
-| Email               | Password      | Role     |
-|---------------------|---------------|----------|
-| alice@example.com   | password123   | Customer |
-| bob@example.com     | password123   | Customer |
-| admin@example.com   | password123   | Admin    |
+| Email                  | Password      | Role     |
+|------------------------|---------------|----------|
+| testuser@test.com      | password123   | Customer |
+| admin@example.com      | password123   | Admin    |
 
 You can also register a new account through the UI.
 
