@@ -27,7 +27,8 @@
                 <div th:unless="${#lists.isEmpty(addresses)}">
                     <div th:each="addr, iterStat : ${addresses}" class="address-card"
                          th:classappend="${iterStat.first || addr.default} ? 'selected'"
-                         th:onclick="'selectAddress(this, \'' + ${addr.id} + '\')'">
+                         th:attr="data-addr-id=${addr.id}"
+                         onclick="selectAddress(this, this.dataset.addrId)">
                         <div class="label" th:text="${addr.label}">Home</div>
                         <div class="details">
                             <span th:text="${addr.recipientName}">Name</span><br>
