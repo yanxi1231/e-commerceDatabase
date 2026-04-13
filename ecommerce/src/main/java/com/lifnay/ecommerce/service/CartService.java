@@ -2,31 +2,29 @@ package com.lifnay.ecommerce.service;
 
 import com.lifnay.ecommerce.model.*;
 import com.lifnay.ecommerce.repository.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
+import java.sql.Types;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
-    private final ProductVariantRepository variantRepository;
-    private final InventoryRepository inventoryRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public CartService(CartRepository cartRepository, CartItemRepository cartItemRepository,
-                       ProductRepository productRepository, ProductVariantRepository variantRepository,
-                       InventoryRepository inventoryRepository) {
+                       JdbcTemplate jdbcTemplate) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
-        this.productRepository = productRepository;
-        this.variantRepository = variantRepository;
-        this.inventoryRepository = inventoryRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /** Get or create a cart for the user */
@@ -41,66 +39,29 @@ public class CartService {
         return cartItemRepository.findByCartId(cart.getId());
     }
 
-    /** Add an item to the cart (or increase quantity if it already exists) */
-    @Transactional
+    /**
+     * Add an item to the cart by calling the sp_add_to_cart stored procedure.
+     * The SP handles: stock validation, duplicate detection, insert or update.
+     */
     public String addToCart(String userId, String productId, String variantId, int quantity) {
-        // Validate product exists and is active
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
-        if (!product.isActive()) {
-            throw new IllegalArgumentException("Product is not available");
+        // Normalize empty string to null for the SP
+        if (variantId != null && variantId.isEmpty()) {
+            variantId = null;
         }
 
-        // Validate variant if provided
-        if (variantId != null && !variantId.isEmpty()) {
-            variantRepository.findById(variantId)
-                    .orElseThrow(() -> new IllegalArgumentException("Variant not found"));
-        } else {
-            variantId = null; // normalize empty string to null
-        }
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("sp_add_to_cart")
+                .declareParameters(
+                        new SqlParameter("p_user_id", Types.CHAR),
+                        new SqlParameter("p_product_id", Types.CHAR),
+                        new SqlParameter("p_variant_id", Types.CHAR),
+                        new SqlParameter("p_quantity", Types.INTEGER),
+                        new SqlOutParameter("p_result_msg", Types.VARCHAR)
+                );
 
-        // Check stock
-        int available;
-        if (variantId != null) {
-            available = inventoryRepository.getAvailableStockForVariant(productId, variantId);
-        } else {
-            available = inventoryRepository.getAvailableStockForProduct(productId);
-        }
-        if (available < quantity) {
-            return "Only " + available + " units available";
-        }
+        Map<String, Object> result = jdbcCall.execute(userId, productId, variantId, quantity);
 
-        Cart cart = getCart(userId);
-
-        // Check if item already in cart
-        Optional<CartItem> existing;
-        if (variantId != null) {
-            existing = cartItemRepository.findByCartIdAndProductIdAndVariantId(cart.getId(), productId, variantId);
-        } else {
-            existing = cartItemRepository.findByCartIdAndProductIdAndVariantIdIsNull(cart.getId(), productId);
-        }
-
-        if (existing.isPresent()) {
-            CartItem item = existing.get();
-            int newQty = item.getQuantity() + quantity;
-            if (newQty > available) {
-                return "Cannot add more. Only " + available + " units available (you have " + item.getQuantity() + " in cart)";
-            }
-            item.setQuantity(newQty);
-            cartItemRepository.save(item);
-            return "Cart updated";
-        } else {
-            CartItem item = new CartItem();
-            item.setId(UUID.randomUUID().toString());
-            item.setCart(cart);
-            item.setProduct(product);
-            if (variantId != null) {
-                item.setVariant(variantRepository.findById(variantId).orElse(null));
-            }
-            item.setQuantity(quantity);
-            cartItemRepository.save(item);
-            return "Item added to cart";
-        }
+        return (String) result.get("p_result_msg");
     }
 
     /** Update quantity of a cart item */
