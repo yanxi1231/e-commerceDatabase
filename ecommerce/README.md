@@ -45,8 +45,7 @@ The application starts at **http://localhost:8080**
 
 | Email                  | Password      | Role     |
 |------------------------|---------------|----------|
-| testuser@test.com      | password123   | Customer |
-| admin@example.com      | password123   | Admin    |
+| test1@example.com      | passwordtest1 | Customer |
 
 You can also register a new account through the UI.
 
